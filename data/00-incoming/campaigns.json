@@ -1,0 +1,51 @@
+{
+  "exported_at": "2025-02-01T08:30:00Z",
+  "campaigns": [
+    {
+      "campaign_id": "MKT-001",
+      "name": "Winter Café",
+      "active": true,
+      "countries": [
+        "BE",
+        "FR",
+        "DE"
+      ],
+      "products": [
+        {
+          "product_code": "P001",
+          "discount_pct": 10
+        },
+        {
+          "product_code": "P004",
+          "discount_pct": 15
+        }
+      ]
+    },
+    {
+      "campaign_id": "MKT-002",
+      "name": "Belle Été",
+      "active": "yes",
+      "countries": [
+        "BE",
+        "ES"
+      ],
+      "products": [
+        {
+          "product_code": "P002",
+          "discount_pct": 20
+        },
+        {
+          "product_code": "P999",
+          "discount_pct": 25
+        }
+      ]
+    },
+    {
+      "campaign_id": "MKT-002",
+      "name": "Belle Été duplicate",
+      "active": false,
+      "countries": [],
+      "products": []
+    }
+  ]
+}

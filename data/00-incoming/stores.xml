@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<stores>
+  <store id="S01">
+    <name>Bruxelles Centre</name>
+    <country>BE</country>
+    <city>Bruxelles</city>
+    <opened>2019-03-15</opened>
+    <manager>Chloé Laurent</manager>
+  </store>
+  <store id="S02">
+    <name>Liège Guillemins</name>
+    <country>BE</country>
+    <city>Liège</city>
+    <opened>2020/07/01</opened>
+    <manager>François Noël</manager>
+  </store>
+  <store id="S03">
+    <name>Antwerpen Zuid</name>
+    <country>BE</country>
+    <city>Antwerpen</city>
+    <opened>01-11-2021</opened>
+    <manager>Jürgen Maes</manager>
+  </store>
+  <store id="S03">
+    <name>Antwerpen Zuid Duplicate</name>
+    <country>BE</country>
+    <city>Antwerpen</city>
+    <opened>2021-11-01</opened>
+    <manager>Jürgen Maes</manager>
+  </store>
+  <store>
+    <name>Namur Pop-up</name>
+    <country>BE</country>
+    <city>Namur</city>
+    <opened>2025-02-30</opened>
+    <manager>Émilie Gérard</manager>
+  </store>
+</stores>

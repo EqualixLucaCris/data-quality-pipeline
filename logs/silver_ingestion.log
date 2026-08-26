@@ -1,0 +1,9 @@
+timestamp,source_file,target_file,source_checksum,target_checksum,status
+2026-08-09T18:41:25+02:00,data/02-bronze/campaigns.json,data/03-silver/campaigns.json,a9408f845b7031df872ccc2b1b7143f69a30a8ef5ccc6af3427b66e6d69584ee,a9408f845b7031df872ccc2b1b7143f69a30a8ef5ccc6af3427b66e6d69584ee,SUCCESS
+2026-08-09T18:41:25+02:00,data/02-bronze/customers.csv,data/03-silver/customers.csv,38625f5d1f605a220a8634ad789d059a964a80501c5b0d25a832bcd05a280dfb,38625f5d1f605a220a8634ad789d059a964a80501c5b0d25a832bcd05a280dfb,SUCCESS
+2026-08-09T18:41:25+02:00,data/02-bronze/order_items.csv,data/03-silver/order_items.csv,157663a34d06c8b7e751561614d8456a653abeb0a224daba805fdfdc298e6e18,157663a34d06c8b7e751561614d8456a653abeb0a224daba805fdfdc298e6e18,SUCCESS
+2026-08-09T18:41:25+02:00,data/02-bronze/orders.csv,data/03-silver/orders.csv,7be4082942c1debc4924b1ccf76d2f3df6d3585e2ac57b1c594121dafe69cd06,7be4082942c1debc4924b1ccf76d2f3df6d3585e2ac57b1c594121dafe69cd06,SUCCESS
+2026-08-09T18:41:25+02:00,data/02-bronze/products.csv,data/03-silver/products.csv,f52edaca3377a74ee0b6fc7e48c38915be0766a3041a467f9bbdb8f80dfaff89,f52edaca3377a74ee0b6fc7e48c38915be0766a3041a467f9bbdb8f80dfaff89,SUCCESS
+2026-08-09T18:41:25+02:00,data/02-bronze/stores.xml,data/03-silver/stores.xml,42cd40ae21c8a5c16dd574753da3fb8d660dbf32eee1aa5987b7bc64714fa698,42cd40ae21c8a5c16dd574753da3fb8d660dbf32eee1aa5987b7bc64714fa698,SUCCESS
+2026-08-11T18:54:16+02:00,data/02-bronze/products.csv,data/03-silver/products.csv,1ad33158f7a29369f4b213eecfbb0bbee2d7da82f8fde199392748e04b2e0432,1ad33158f7a29369f4b213eecfbb0bbee2d7da82f8fde199392748e04b2e0432,SUCCESS
+2026-08-13T19:13:59+02:00,tmp/xml_stores/stores.csv,data/03-silver/stores.csv,e46912b5b551dc4ad18c05126fe7890274a7c0200878219bb5a2f1c96b45fe1d,e46912b5b551dc4ad18c05126fe7890274a7c0200878219bb5a2f1c96b45fe1d,SUCCESS

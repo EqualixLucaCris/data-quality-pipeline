@@ -1,0 +1,5 @@
+timestamp,file,action,status
+2026-08-06T21:20:50+02:00,customers.csv,delimiter ; to ,,SUCCESS
+2026-08-06T21:20:50+02:00,order_items.csv,delimiter pipe to comma,SUCCESS
+2026-08-06T21:20:50+02:00,products.csv,delimiter TAB to comma,SUCCESS
+2026-08-06T21:20:50+02:00,orders.csv,UTF-8 BOM removed,SUCCESS

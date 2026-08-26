@@ -1,0 +1,8 @@
+timestamp,source_file,target_file,source_checksum,target_checksum,status
+2026-08-04T21:48:28+02:00,data/00-incoming/ASSIGNMENT.md,data/01-raw/ASSIGNMENT.md,f2b77a1522dab0146f5a77d586f5ac1a0332e301c62658bca8ffdcc1d95db25a,f2b77a1522dab0146f5a77d586f5ac1a0332e301c62658bca8ffdcc1d95db25a,SUCCESS
+2026-08-04T21:48:28+02:00,data/00-incoming/campaigns.json,data/01-raw/campaigns.json,a9408f845b7031df872ccc2b1b7143f69a30a8ef5ccc6af3427b66e6d69584ee,a9408f845b7031df872ccc2b1b7143f69a30a8ef5ccc6af3427b66e6d69584ee,SUCCESS
+2026-08-04T21:48:28+02:00,data/00-incoming/customers.csv,data/01-raw/customers.csv,d2ba7dfab856fe1788f781c25a1eb819b3af38a93ad69ba735aabe71d64fd209,d2ba7dfab856fe1788f781c25a1eb819b3af38a93ad69ba735aabe71d64fd209,SUCCESS
+2026-08-04T21:48:28+02:00,data/00-incoming/order_items.csv,data/01-raw/order_items.csv,f77aeaa6782777237a03f728ecc35901dd6713e6ee89c15f9a47ac2ddfd66798,f77aeaa6782777237a03f728ecc35901dd6713e6ee89c15f9a47ac2ddfd66798,SUCCESS
+2026-08-04T21:48:28+02:00,data/00-incoming/orders.csv,data/01-raw/orders.csv,cdac01557ea22fed43702e213ef040db8c373d3185274a33544c1f9bc8b30d06,cdac01557ea22fed43702e213ef040db8c373d3185274a33544c1f9bc8b30d06,SUCCESS
+2026-08-04T21:48:28+02:00,data/00-incoming/products.csv,data/01-raw/products.csv,02151b9f26a9bac6c6196055ad9b981c50d9ef9d1f55b5a337b2d20a17bcc58e,02151b9f26a9bac6c6196055ad9b981c50d9ef9d1f55b5a337b2d20a17bcc58e,SUCCESS
+2026-08-04T21:48:28+02:00,data/00-incoming/stores.xml,data/01-raw/stores.xml,4c805e1ee8bfce9dde054e80c1ecf561bf66c5d3a8bd782327519332ca33af23,4c805e1ee8bfce9dde054e80c1ecf561bf66c5d3a8bd782327519332ca33af23,SUCCESS

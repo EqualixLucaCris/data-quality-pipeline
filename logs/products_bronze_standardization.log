@@ -1,0 +1,2 @@
+timestamp,file,action,status
+2026-08-10T20:38:07+02:00,products.csv,UTF-16LE_to_UTF-8_and_TAB_to_semicolon,SUCCESS

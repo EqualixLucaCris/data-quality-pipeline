@@ -1,0 +1,10 @@
+Customer ID;Full Name;Email Address;Country;City;Signup Date;Segment
+C001;André Müller;andre.mueller@example.com;DE;München;15/01/2024;Consumer
+C002;François Dupont;francois.dupont@example.com;FR;Lyon;2024-02-18;Corporate
+C003;María García;maria.garcia@example.com;ES;Málaga;03-21-2024;Consumer
+C004;Luca Bianchi;luca.bianchi@example.com;IT;Città di Castello;2024/04/02;Home Office
+C005;Élodie Bernard;;BE;Liège;30/04/2024;Consumer
+C006;Søren Jensen;soren.jensen@example.com;DK;København;2024-05-12;Corporate
+C006;Søren Jensen;soren.jensen@example.com;DK;København;2024-05-12;Corporate
+C008;Anaïs Martin;anais.martin@example.com;FR;Nîmes;31/06/2024;Consumer
+;José Álvarez;jose.alvarez@example.com;ES;Sevilla;2024-07-01;Consumer
