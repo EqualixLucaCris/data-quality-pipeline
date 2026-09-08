@@ -2,18 +2,13 @@
 
 ## Purpose
 
-This document describes the operational flow of the Data Quality
-Pipeline from source ingestion to analytical outputs.
+This document describes the operational flow of the Data Quality Pipeline from heterogeneous source ingestion to Gold analytical outputs.
 
-The pipeline currently reaches a completed Silver layer.
-
-**Gold status:** Work in Progress.
-
-------------------------------------------------------------------------
+---
 
 ## End-to-End Flow
 
-``` text
+```text
 00-incoming
      |
      v
@@ -29,165 +24,129 @@ clean   rejected
    |
    v
 04-gold
-WORK IN PROGRESS
+   |
+   v
+BI / Analytics
 ```
 
-------------------------------------------------------------------------
+---
 
 ## 1. Incoming File Inventory
 
 Source files are inspected before ingestion.
 
-The inventory captures technical metadata such as:
-
--   file name;
--   extension;
--   size;
--   MIME/file type;
--   encoding;
--   BOM;
--   delimiter;
--   row count;
--   column count where applicable;
--   SHA-256 checksum.
+The inventory captures:
+- file name;
+- extension;
+- size;
+- file/MIME type;
+- encoding;
+- BOM;
+- delimiter;
+- row count;
+- column count where applicable;
+- SHA-256 checksum.
 
 Primary Bash script:
 
 `01_file_inventory.sh`
 
-------------------------------------------------------------------------
+---
 
 ## 2. Raw Ingestion
 
-Incoming source files are copied into the Raw layer.
+Incoming source files are copied into Raw.
 
 Purpose:
-
--   preserve source data;
--   provide traceability;
--   separate ingestion from downstream transformation.
+- preserve source data;
+- provide traceability;
+- separate ingestion from transformation.
 
 Primary Bash script:
 
 `raw_ingestion.sh`
 
-Pipeline activity is recorded in project logs.
-
-------------------------------------------------------------------------
+---
 
 ## 3. Bronze Standardization
 
 Raw files are standardized for downstream processing.
 
-Transformations may include:
-
--   encoding conversion to UTF-8;
--   delimiter normalization;
--   preservation of already compliant files;
--   preparation of structured/semi-structured sources.
+Transformations include:
+- encoding conversion to UTF-8;
+- delimiter normalization;
+- preservation of already compliant files;
+- preparation of structured and semi-structured sources.
 
 Primary Bash script:
 
 `bronze_standardization.sh`
 
-Transformation decisions are documented in:
+Transformation decisions are documented in `docs/bronze_transformation_plan`.
 
-`docs/bronze_transformation_plan`
+---
 
-------------------------------------------------------------------------
+## 4. DuckDB Staging
 
-## 4. Silver Preparation
+Standardized sources are loaded into the persistent DuckDB project database for profiling and transformation.
 
-Bronze datasets are prepared for SQL profiling and cleaning.
+DuckDB is used for SQL execution, schema inspection, relational validation and Parquet export/readback.
 
-Silver work is performed primarily with DuckDB and SQL.
-
-The Silver workflow follows this general pattern:
-
-``` text
-Bronze dataset
-      |
-      v
-Profiling
-      |
-      v
-Quality rules
-   /       \
-valid     invalid
-  |          |
-  v          v
-clean     rejected
-  |
-  v
-Parquet
-```
-
-------------------------------------------------------------------------
+---
 
 ## 5. Silver Profiling
 
-Each dataset is inspected before cleaning.
+Each dataset is profiled before cleaning.
 
-Typical checks include:
+Checks include:
+- schema and data types;
+- row counts;
+- NULL values;
+- blank strings;
+- duplicate keys;
+- exact duplicates;
+- numeric ranges;
+- date validity;
+- business-rule violations;
+- referential integrity.
 
--   schema and data types;
--   row counts;
--   NULL values;
--   blank strings;
--   duplicate keys;
--   exact duplicates;
--   numeric ranges;
--   date validity;
--   dataset-specific business rules;
--   referential integrity.
+Profiling decisions are preserved in SQL files.
 
-Profiling decisions are preserved in SQL files rather than performed
-silently.
-
-------------------------------------------------------------------------
+---
 
 ## 6. Silver Cleaning
 
-Cleaning rules are based on profiling evidence.
+Cleaning is based on profiling evidence.
 
-Typical operations include:
+Operations include:
+- column-name normalization;
+- type/date normalization;
+- confirmed duplicate removal;
+- business-rule enforcement;
+- orphan-reference detection;
+- clean/rejected separation.
 
--   column-name normalization;
--   type/date normalization;
--   confirmed duplicate removal;
--   business-rule enforcement;
--   orphan-reference detection;
--   separation of valid and rejected records.
+Clean tables use `_clean`.
 
-Clean datasets use the suffix:
+Rejected tables use `_rejected`.
 
-`_clean`
+Rejected records may contain `rejection_reason`.
 
-Rejected datasets use the suffix:
-
-`_rejected`
-
-Rejected records may include:
-
-`rejection_reason`
-
-------------------------------------------------------------------------
+---
 
 ## 7. Referential Integrity Validation
 
-Related Silver datasets are checked before analytical use.
+Related Silver datasets are validated before analytical use.
 
-Examples include:
+Examples:
+- `order_items_clean.order_no` → `orders_clean.order_no`
+- `order_items_clean.product_code` → `products_clean.prod_code`
+- `orders_clean.cust_ref` → `customers_clean.customer_id`
+- `orders_clean.store_ref` → `stores_clean.store_id`
+- campaign child tables → `campaigns_clean`
+- campaign products → `products_clean`
 
--   order items → orders;
--   order items → products;
--   campaign products → products;
--   campaign relationships → campaigns.
-
-Orphan references are excluded from trusted Silver output and preserved
-as rejected data when applicable.
-
-------------------------------------------------------------------------
+---
 
 ## 8. Silver Parquet Export
 
@@ -199,88 +158,136 @@ Rejected datasets are exported to:
 
 `data/05-rejected/`
 
-Parquet outputs are read back after export to verify that persisted data
-is usable.
+Parquet outputs are read back after export.
 
-------------------------------------------------------------------------
+---
 
 ## 9. Logging
 
-Pipeline operations generate logs under:
+File-oriented pipeline operations generate logs under:
 
-`data/06-logs/`
+`logs/`
 
-Current logging covers file-oriented ingestion and standardization
-steps.
+Logs document ingestion and standardization activity and support traceability.
 
-Logging may be extended as the Gold layer is implemented.
+---
 
-------------------------------------------------------------------------
+## 10. Gold Business Questions
 
-## 10. Gold Analytics
+The Gold layer answers five focused BI questions:
 
-**Status: Work in Progress**
+1. How much net revenue was generated by each completed order?
+2. Which products generate the most net revenue, units sold and margin?
+3. Which product categories generate the most net revenue and margin?
+4. Which stores generate the most net revenue and total margin?
+5. Which customers generate the most net revenue and total margin?
 
-Gold will:
+Detailed requirements are documented in `docs/business_questions.md`.
 
--   consume validated Silver datasets only;
--   apply documented business rules;
--   join trusted datasets;
--   calculate analytical measures;
--   answer the questions defined in `docs/business_questions.md`;
--   produce reusable analytical datasets/KPIs.
+---
 
-The current planned BI scope includes:
+## 11. Gold Business Rules
 
-1.  net revenue by completed order;
-2.  product performance;
-3.  category performance;
-4.  store performance;
-5.  customer performance.
+Gold consumes validated Silver tables only.
 
-Gold implementation details will be added after the SQL datasets are
-built and validated.
+Common rules:
+- only orders with `status = 'completed'`;
+- only active products where applicable;
+- rejected Silver records are excluded;
+- `net_revenue = quantity * unit_price * (1 - discount / 100)`;
+- margin uses effective selling price after discount minus `unit_cost`;
+- monetary metrics are rounded to two decimal places.
 
-------------------------------------------------------------------------
+---
 
-## 11. Gold Validation
+## 12. Gold Dataset Creation
 
-**Status: Work in Progress**
+Five Gold tables are created in DuckDB:
 
-Gold validation will be defined alongside the analytical datasets.
+- `gold_completed_order_revenue`
+- `gold_product_performance`
+- `gold_category_performance`
+- `gold_store_performance`
+- `gold_customer_performance`
 
-Expected checks include:
+Gold transformations combine validated Silver datasets through joins, filters, aggregations and business metrics.
 
--   correct Silver input dependencies;
--   expected grain;
--   duplicate prevention;
--   revenue-rule consistency;
--   reconciliation of analytical totals where applicable.
+---
 
-------------------------------------------------------------------------
+## 13. Gold Validation
+
+Each Gold dataset is validated before export.
+
+Checks include:
+- expected row count;
+- expected analytical grain;
+- uniqueness of the Gold business key/dimension;
+- duplicate detection;
+- metric sanity checks;
+- consistency with documented business rules.
+
+---
+
+## 14. Gold Parquet Export
+
+Validated Gold datasets are exported to:
+
+`data/04-gold/`
+
+Current outputs:
+
+```text
+gold_completed_order_revenue.parquet
+gold_product_performance.parquet
+gold_category_performance.parquet
+gold_store_performance.parquet
+gold_customer_performance.parquet
+```
+
+Every Gold Parquet is read back after export.
+
+---
+
+## 15. Version Control
+
+The repository uses Git locally and GitHub for publication.
+
+Versioned assets include:
+- Bash scripts;
+- SQL profiling/cleaning/Gold logic;
+- documentation;
+- logs and reports;
+- incoming source data;
+- final Gold Parquet outputs.
+
+Generated Raw, Bronze, Silver and rejected data are excluded according to `.gitignore`.
+
+---
 
 ## Pipeline Status
 
-``` text
+```text
 Incoming inventory       COMPLETE
 Raw ingestion            COMPLETE
 Bronze standardization   COMPLETE
 Silver profiling         COMPLETE
 Silver cleaning          COMPLETE
-Silver rejected handling COMPLETE
+Rejected handling        COMPLETE
 Silver Parquet export    COMPLETE
-Gold analytics           WORK IN PROGRESS
-Gold validation          WORK IN PROGRESS
+Gold analytics           COMPLETE
+Gold validation          COMPLETE
+Gold Parquet export      COMPLETE
+Documentation            COMPLETE
 ```
 
-------------------------------------------------------------------------
+---
 
-## Maintenance
+## Reproducibility
 
-This document should be updated when:
+The project is designed so generated intermediate layers can be rebuilt from version-controlled source inputs and transformation logic.
 
--   a pipeline stage changes;
--   a new transformation is introduced;
--   quality/rejection logic materially changes;
--   Gold datasets are added;
--   execution or logging behavior changes.
+The repository therefore emphasizes:
+
+`source data + transformation code + documentation + final Gold deliverables`
+
+rather than versioning every generated intermediate file.

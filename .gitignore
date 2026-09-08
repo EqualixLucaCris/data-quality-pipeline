@@ -4,7 +4,9 @@
 
 *.duckdb
 *.duckdb.wal
-
+duckdb/*.duckdb
+duckdb/*.duckdb.wal
+duckdb/*.duckdb-ui
 
 # ============================================================
 # Pipeline-generated data

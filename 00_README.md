@@ -4,13 +4,21 @@ End-to-end ingestion, standardization, validation and analytics pipeline for het
 
 ## Project Status
 
-**Silver layer: completed**
+**Pipeline completed through Gold**
 
-The current published version covers ingestion, Bronze standardization, Silver profiling, cleaning, validation, JSON flattening, referential-integrity checks and Parquet outputs.
+The project covers:
 
-**Gold layer: Work in Progress**
+- heterogeneous file ingestion;
+- technical standardization;
+- Silver profiling and cleaning;
+- rejected-record handling;
+- referential-integrity validation;
+- JSON flattening;
+- Gold analytical modeling;
+- Parquet export and read-back validation;
+- project documentation and versioning.
 
-Gold analytical models and business KPIs are intentionally left as the next project phase. The repository is published as a working Data Engineering project rather than presenting unfinished analytical work as complete.
+The Gold layer is complete and contains five analytics-ready datasets.
 
 ## Technologies
 
@@ -23,31 +31,101 @@ Gold analytical models and business KPIs are intentionally left as the next proj
 ## Architecture
 
 ```text
-Incoming -> Raw -> Bronze -> Silver -> Gold (Work in Progress) -> BI / Analytics
+Incoming -> Raw -> Bronze -> Silver -> Gold -> BI / Analytics-ready outputs
 ```
 
 ## Data Sources
 
-The pipeline processes heterogeneous source formats including CSV, JSON and XML, with different delimiters and encodings such as UTF-8, UTF-8 BOM, UTF-16LE and ISO-8859-1.
+The pipeline processes heterogeneous source formats including:
+
+- CSV
+- JSON
+- XML
+
+The source files also contain different technical characteristics, including:
+
+- multiple delimiters;
+- UTF-8;
+- UTF-8 BOM;
+- UTF-16LE;
+- ISO-8859-1.
 
 ## Pipeline Layers
 
 ### Incoming
+
 Original source datasets are preserved unchanged for reproducibility.
 
 ### Raw
-Source copies are ingested by Bash scripts. Generated Raw data is not version-controlled.
+
+Source copies are ingested without business transformation.
+
+Generated Raw data is not version-controlled.
 
 ### Bronze
-Files are standardized for encoding, delimiters and structural consistency.
+
+Files are technically standardized for downstream processing.
+
+Examples include:
+
+- encoding conversion;
+- delimiter normalization;
+- BOM handling;
+- preservation of source business meaning.
 
 ### Silver
-Silver contains profiling, cleaning, type conversion, deduplication, validation, referential-integrity checks and Parquet exports.
 
-Handled issues include malformed dates, NULLs, duplicate rows, duplicate business keys, inconsistent boolean values, invalid product references, orphan customer references, JSON flattening and encoding problems.
+Silver contains trusted, validated datasets.
 
-### Gold — Work in Progress
-Planned work includes analytical joins, revenue and margin metrics, sales by product/store/time, campaign analytics and a final BI layer.
+Processing includes:
+
+- profiling;
+- type conversion;
+- date normalization;
+- NULL and blank-string checks;
+- exact duplicate removal;
+- business-key validation;
+- business-rule validation;
+- referential-integrity checks;
+- clean/rejected separation;
+- Parquet export and verification.
+
+Handled issues include:
+
+- malformed dates;
+- NULL values;
+- duplicate rows;
+- duplicate business keys;
+- inconsistent boolean values;
+- invalid product references;
+- orphan customer/order references;
+- invalid quantities and discounts;
+- JSON flattening;
+- encoding problems.
+
+### Gold
+
+Gold contains analytics-ready datasets built only from validated Silver data.
+
+Implemented Gold datasets:
+
+```text
+gold_completed_order_revenue
+gold_product_performance
+gold_category_performance
+gold_store_performance
+gold_customer_performance
+```
+
+The Gold layer answers five focused business questions covering:
+
+- completed-order revenue;
+- product performance;
+- category performance;
+- store performance;
+- customer performance.
+
+Revenue and margin calculations use documented business rules and only validated Silver records.
 
 ## JSON Flattening
 
@@ -59,13 +137,29 @@ campaigns_clean
     `-- campaign_products_clean
 ```
 
+The resulting child tables are validated against campaign and product master data.
+
 ## Data Quality Principles
 
-- source values are never silently invented
-- invalid values remain NULL when no trusted correction exists
-- unresolved foreign-key issues are documented
-- rejected records are retained separately when appropriate
-- business-key duplicates are distinguished from exact-row duplicates
+- Source values are never silently invented.
+- Invalid values remain `NULL` when no trusted correction exists.
+- Unresolved foreign-key issues are documented.
+- Rejected records are preserved separately when appropriate.
+- Business-key duplicates are distinguished from exact-row duplicates.
+- Gold analytics use validated Silver records only.
+
+## Gold Output Inventory
+
+```text
+data/04-gold/
+├── gold_completed_order_revenue.parquet
+├── gold_product_performance.parquet
+├── gold_category_performance.parquet
+├── gold_store_performance.parquet
+└── gold_customer_performance.parquet
+```
+
+Every Gold Parquet output was read back after export to verify persistence and consistency.
 
 ## Data Versioning Strategy
 
@@ -73,10 +167,12 @@ campaigns_clean
 - `data/01-raw/` — generated, excluded from Git
 - `data/02-bronze/` — generated, excluded from Git
 - `data/03-silver/` — generated, excluded from Git
-- `data/04-gold/` — Gold outputs will be version-controlled when implemented
+- `data/04-gold/` — final Gold outputs, version-controlled
 - `data/05-rejected/` — generated rejected records, excluded from Git
 
-Scripts, SQL transformations, logs, reports and documentation are version-controlled. Local DuckDB databases and temporary files are excluded through `.gitignore`.
+Scripts, SQL transformations, logs, reports and documentation are version-controlled.
+
+Local DuckDB databases, temporary files and reproducible intermediate outputs are excluded through `.gitignore`.
 
 ## Repository Structure
 
@@ -87,10 +183,24 @@ docs/        Project documentation
 duckdb/      Local DuckDB workspace
 logs/        Pipeline execution logs
 reports/     Quality and pipeline reports
-sql/         SQL profiling and transformation scripts
+sql/         SQL profiling, cleaning and Gold analytics
 tmp/         Temporary processing files
 ```
 
+## Documentation
+
+The repository includes:
+
+- `architecture.md`
+- `pipeline.md`
+- `conventions.md`
+- `data_catalog.md`
+- `business_questions.md`
+- `bronze_transformation_plan`
+- quality and inventory reports
+
 ## Current Scope
 
-This release demonstrates the completed ingestion-to-Silver portion of the pipeline. Gold modeling is explicitly marked **Work in Progress** so joins, analytical modeling and BI can be developed as the next phase.
+This release demonstrates a complete local Data Engineering workflow from heterogeneous source ingestion through validated Gold analytical datasets.
+
+The project intentionally focuses on data ingestion, quality, transformation, modeling and reproducibility. A BI/dashboard layer can consume the Gold outputs but is not required for the pipeline itself.

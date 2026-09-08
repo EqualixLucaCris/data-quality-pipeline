@@ -2,348 +2,331 @@
 
 ## Purpose
 
-This catalog provides a concise inventory of the datasets used by the
-Data Quality Pipeline.
+This catalog provides a concise inventory of the trusted datasets used by the Data Quality Pipeline.
 
-It documents: - dataset purpose; - Medallion layer; - storage format; -
-logical grain; - keys and relationships; - main data-quality rules; -
-lineage between validated Silver datasets.
+It documents dataset purpose, Medallion layer, storage format, logical grain, keys, relationships, quality rules and Gold analytical outputs.
 
-Gold datasets will be added after the analytical layer is implemented.
-
-------------------------------------------------------------------------
+---
 
 # Silver Layer
 
-Silver contains validated, cleaned datasets used as the trusted input
-for Gold analytics.
+Silver contains validated, cleaned datasets used as the trusted input for Gold analytics.
 
-Clean Silver outputs are stored as Parquet files in:
+Clean Silver outputs are persisted as Parquet under:
 
 `data/03-silver/clean/`
 
-Rejected records are stored separately in:
+Rejected records are persisted separately under:
 
 `data/05-rejected/`
 
-------------------------------------------------------------------------
-
 ## customers_clean
 
-**Layer:** Silver\
-**Format:** Parquet\
-**Purpose:** Validated customer master data.\
-**Grain:** One row per customer record after deduplication and cleaning.
+**Layer:** Silver  
+**Format:** Parquet  
+**Purpose:** Validated customer master data.  
+**Grain:** One row per customer after deduplication and cleaning.
 
-### Main fields
+Main fields:
+- `customer_id`
+- `full_name`
+- `email_address`
+- `country`
+- `city`
+- `signup_date`
+- `segment`
 
--   `customer_id` --- customer identifier
--   `full_name` --- customer full name
--   `email_address` --- customer email address
--   `country` --- customer country
--   `city` --- customer city
--   `signup_date` --- normalized signup date
--   `segment` --- customer business segment
+Relationship:
+- `customers_clean.customer_id` ← `orders_clean.cust_ref`
 
-### Quality rules
-
--   Exact duplicate rows are removed.
--   Column names are standardized to `snake_case`.
--   Multiple source date formats are normalized to a valid date type.
--   Missing identifiers and email values are explicitly profiled.
--   Uncertain source values are not fabricated.
-
-### Relationships
-
-Customer references used by the order domain are validated during Silver
-processing before analytical use.
-
-------------------------------------------------------------------------
+Quality notes:
+- exact duplicates removed;
+- dates normalized;
+- missing identifiers/emails profiled;
+- uncertain values are not fabricated.
 
 ## orders_clean
 
-**Layer:** Silver\
-**Format:** Parquet\
-**Purpose:** Validated order-header data.\
-**Grain:** One row per order.
+**Layer:** Silver  
+**Format:** Parquet  
+**Purpose:** Validated order-header data.  
+**Grain:** One row per order.  
+**Business key:** `order_no`
 
-### Known business fields
+Main fields:
+- `order_no`
+- `cust_ref`
+- `store_ref`
+- `order_date`
+- `status`
+- `currency`
 
--   `order_no` --- order identifier
--   `order_date` --- normalized order date
--   `status` --- order status
+Relationships:
+- `cust_ref` → `customers_clean.customer_id`
+- `store_ref` → `stores_clean.store_id`
+- `order_no` ← `order_items_clean.order_no`
 
-The table also contains the customer/store references required to
-connect orders to their related master data.
-
-### Quality rules
-
--   Dates are normalized.
--   Duplicate and missing values are profiled.
--   Customer/store references are investigated and validated where
-    applicable.
--   Source values are not replaced without supporting evidence.
-
-### Relationships
-
--   Parent of `order_items_clean` through `order_no`.
--   Provides customer and store references used by Gold analytics.
-
-------------------------------------------------------------------------
+Quality notes:
+- dates normalized;
+- duplicates removed;
+- status normalized;
+- invalid source dates become `NULL` when no trusted correction exists.
 
 ## order_items_clean
 
-**Layer:** Silver\
-**Format:** Parquet\
-**Purpose:** Validated order-line data used as the transactional basis
-for sales analytics.\
-**Grain:** One row per valid order line.\
+**Layer:** Silver  
+**Format:** Parquet  
+**Purpose:** Validated transactional order-line data used as the sales basis for Gold analytics.  
+**Grain:** One row per valid order line.  
 **Business key:** `line_id`
 
-### Columns
+| Column | Type | Description |
+|---|---|---|
+| `line_id` | VARCHAR | Order-line identifier |
+| `order_no` | VARCHAR | Order identifier |
+| `product_code` | VARCHAR | Product identifier |
+| `quantity` | BIGINT | Number of units |
+| `unit_price` | DOUBLE | Unit price on the order line |
+| `discount` | BIGINT | Discount percentage |
 
-  Column           Type      Description
-  ---------------- --------- -----------------------------------------
-  `line_id`        VARCHAR   Unique order-line identifier
-  `order_no`       VARCHAR   Order identifier
-  `product_code`   VARCHAR   Product identifier
-  `quantity`       BIGINT    Number of units on the order line
-  `unit_price`     DOUBLE    Unit price recorded on the order line
-  `discount`       BIGINT    Discount percentage applied to the line
+Relationships:
+- `order_no` → `orders_clean.order_no`
+- `product_code` → `products_clean.prod_code`
 
-### Relationships
+Quality rules:
+- `line_id` unique;
+- exact duplicates removed;
+- `quantity > 0`;
+- `unit_price > 0`;
+- `discount` between `0` and `100`;
+- valid order and product references required.
 
--   `order_no` → `orders_clean.order_no`
--   `product_code` → `products_clean.prod_code`
-
-### Quality rules
-
--   `line_id` must be unique in the clean dataset.
--   Exact duplicate rows are removed.
--   `quantity > 0`
--   `unit_price > 0`
--   `discount` must be between `0` and `100`.
--   `order_no` must exist in `orders_clean`.
--   `product_code` must exist in `products_clean`.
-
-### Silver result
-
--   Source rows: 11
--   Clean rows: 5
--   Unique rejected rows: 5
--   Exact duplicate source row removed: 1
-
-------------------------------------------------------------------------
+Silver result:
+- source rows: 11
+- clean rows: 5
+- unique rejected rows: 5
+- exact duplicate source row removed: 1
 
 ## products_clean
 
-**Layer:** Silver\
-**Format:** Parquet\
-**Purpose:** Validated product master data.\
-**Grain:** One row per product.\
-**Known product key:** `prod_code`
+**Layer:** Silver  
+**Format:** Parquet  
+**Purpose:** Validated product master data.  
+**Grain:** One row per product.  
+**Business key:** `prod_code`
 
-### Quality rules
+Main fields:
+- `prod_code`
+- `product_name`
+- `category`
+- `unit_cost`
+- `unit_price`
+- `active`
 
--   Product identifiers are standardized and validated.
--   Product attributes and numeric values are cleaned before analytical
-    use.
--   Product references from transactional/campaign datasets are
-    validated against this table.
-
-### Relationships
-
-Referenced by:
-
--   `order_items_clean.product_code`
--   `campaign_products_clean.product_code`
-
-------------------------------------------------------------------------
+Relationships:
+- `prod_code` ← `order_items_clean.product_code`
+- `prod_code` ← `campaign_products_clean.product_code`
 
 ## stores_clean
 
-**Layer:** Silver\
-**Format:** Parquet\
-**Purpose:** Validated store master data.\
-**Grain:** One row per store.
+**Layer:** Silver  
+**Format:** Parquet  
+**Purpose:** Validated store master data.  
+**Grain:** One row per store.  
+**Business key:** `store_id`
 
-### Quality rules
-
--   Store attributes are standardized.
--   Text/encoding issues are resolved during Bronze/Silver processing.
--   Store references used by orders are validated before Gold analytics.
-
-### Relationships
-
-Used by the order domain to support store-performance analysis in Gold.
-
-------------------------------------------------------------------------
+Relationship:
+- `store_id` ← `orders_clean.store_ref`
 
 ## campaigns_clean
 
-**Layer:** Silver\
-**Format:** Parquet\
-**Purpose:** Validated campaign master data derived from the nested
-campaigns JSON source.\
-**Grain:** One row per campaign.\
+**Layer:** Silver  
+**Format:** Parquet  
+**Purpose:** Validated campaign master data derived from nested JSON.  
+**Grain:** One row per campaign.  
 **Business key:** `campaign_id`
 
-### Columns
-
--   `campaign_id` --- campaign identifier
--   `name` --- campaign name
--   `active` --- normalized BOOLEAN campaign status
--   `exported_at` --- source export timestamp
-
-### Quality rules
-
--   Duplicate campaign business keys are resolved using documented
-    source evidence.
--   JSON boolean variants such as `true` and `"yes"` are normalized to
-    BOOLEAN.
--   Campaign identifiers must be unique in the clean dataset.
-
-------------------------------------------------------------------------
+Main fields:
+- `campaign_id`
+- `name`
+- `active`
+- `exported_at`
 
 ## campaign_countries_clean
 
-**Layer:** Silver\
-**Format:** Parquet\
-**Purpose:** Normalized campaign-to-country relationships produced by
-JSON flattening.\
+**Layer:** Silver  
+**Format:** Parquet  
+**Purpose:** Campaign-to-country relationships.  
 **Grain:** One row per `campaign_id + country`.
 
-### Columns
-
--   `campaign_id` --- campaign identifier
--   `country` --- country associated with the campaign
-
-### Relationships
-
--   `campaign_id` → `campaigns_clean.campaign_id`
-
-### Quality rules
-
--   Duplicate campaign-country combinations are removed.
--   Campaign references must exist in `campaigns_clean`.
--   Invalid/orphan relationships are separated from clean data.
-
-------------------------------------------------------------------------
+Relationship:
+- `campaign_id` → `campaigns_clean.campaign_id`
 
 ## campaign_products_clean
 
-**Layer:** Silver\
-**Format:** Parquet\
-**Purpose:** Normalized campaign-to-product relationships produced by
-JSON flattening.\
+**Layer:** Silver  
+**Format:** Parquet  
+**Purpose:** Campaign-to-product relationships.  
 **Grain:** One row per `campaign_id + product_code`.
 
-### Columns
+Main fields:
+- `campaign_id`
+- `product_code`
+- `discount_pct`
 
--   `campaign_id` --- campaign identifier
--   `product_code` --- referenced product identifier
--   `discount_pct` --- campaign discount percentage
+Relationships:
+- `campaign_id` → `campaigns_clean.campaign_id`
+- `product_code` → `products_clean.prod_code`
 
-### Relationships
-
--   `campaign_id` → `campaigns_clean.campaign_id`
--   `product_code` → `products_clean.prod_code`
-
-### Quality rules
-
--   Duplicate campaign-product combinations are removed.
--   Campaign references must exist in `campaigns_clean`.
--   Product references must exist in `products_clean`.
--   Invalid relationships are preserved in rejected output.
-
-------------------------------------------------------------------------
+---
 
 # Rejected Data
 
-Rejected datasets preserve records that cannot safely enter the trusted
-Silver analytical layer.
+Rejected datasets preserve records that cannot safely enter trusted Silver outputs.
 
-Rejected records may contain a `rejection_reason` describing the failed
-quality rule.
-
-Current rejected outputs include campaign relationship rejects and
-order-item rejects.
-
-Examples of rejection reasons used by the project:
-
--   `invalid_quantity`
--   `invalid_unit_price`
--   `invalid_discount`
--   `orphan_order_no`
--   `orphan_product_code`
+Examples of rejection reasons:
+- `invalid_quantity`
+- `invalid_unit_price`
+- `invalid_discount`
+- `orphan_order_no`
+- `orphan_product_code`
 
 Rejected records are excluded from Gold analytics.
 
-------------------------------------------------------------------------
+---
 
 # Silver Relationship Map
 
-``` text
+```text
 customers_clean
       |
-      | customer reference
+      | customer_id = cust_ref
       v
-orders_clean -------------------- stores_clean
-      |
-      | order_no
+orders_clean --------------------> stores_clean
+      |                              ^
+      | order_no                     | store_ref = store_id
       v
-order_items_clean -------------- products_clean
-                                     ^
-                                     |
-                                     | product_code
-                                     |
+order_items_clean ----------------> products_clean
+                                        ^
+                                        |
+                                        | product_code = prod_code
+                                        |
 campaigns_clean
       |
-      +---- campaign_countries_clean
+      +----> campaign_countries_clean
       |
-      +---- campaign_products_clean --+
+      +----> campaign_products_clean --+
 ```
 
-The exact order-to-customer and order-to-store reference column names
-remain defined by the final Silver schema and should be kept
-synchronized with the SQL transformations.
-
-------------------------------------------------------------------------
+---
 
 # Gold Layer
 
-**Status:** Work in Progress
+Gold consumes validated Silver data only and answers the business questions defined in `docs/business_questions.md`.
 
-Gold datasets will be documented here after implementation.
+Gold Parquet outputs are stored under:
 
-For every Gold dataset, this catalog will record:
+`data/04-gold/`
 
--   dataset name;
--   business purpose;
--   source Silver tables;
--   grain;
--   dimensions;
--   metrics/KPIs;
--   business rules;
--   output format;
--   important relationships.
+## gold_completed_order_revenue
 
-The analytical requirements are defined in:
+**Purpose:** Net revenue by completed order.  
+**Grain:** One row per completed order.
 
-`docs/business_questions.md`
+Sources:
+- `orders_clean`
+- `order_items_clean`
 
-------------------------------------------------------------------------
+Fields:
+- `order_no`
+- `order_date`
+- `net_revenue`
+
+Rule:
+- only completed orders;
+- `net_revenue = quantity * unit_price * (1 - discount / 100)`.
+
+## gold_product_performance
+
+**Purpose:** Product sales and profitability analysis.  
+**Grain:** One row per active product with completed-order activity.
+
+Sources:
+- `products_clean`
+- `order_items_clean`
+- `orders_clean`
+
+Metrics:
+- `units_sold`
+- `net_revenue`
+- `total_margin`
+- `margin_per_unit`
+
+## gold_category_performance
+
+**Purpose:** Category-level sales and profitability analysis.  
+**Grain:** One row per product category.
+
+Sources:
+- `products_clean`
+- `order_items_clean`
+- `orders_clean`
+
+Metrics:
+- `units_sold`
+- `net_revenue`
+- `total_margin`
+- `margin_per_unit`
+
+## gold_store_performance
+
+**Purpose:** Store-level revenue and profitability analysis.  
+**Grain:** One row per store with completed-order activity.
+
+Sources:
+- `stores_clean`
+- `orders_clean`
+- `order_items_clean`
+- `products_clean`
+
+Metrics:
+- `completed_orders`
+- `units_sold`
+- `net_revenue`
+- `total_margin`
+
+## gold_customer_performance
+
+**Purpose:** Customer-level sales and profitability analysis.  
+**Grain:** One row per customer with completed-order activity.
+
+Sources:
+- `customers_clean`
+- `orders_clean`
+- `order_items_clean`
+- `products_clean`
+
+Metrics:
+- `completed_orders`
+- `units_sold`
+- `net_revenue`
+- `total_margin`
+
+---
+
+# Gold Output Inventory
+
+```text
+data/04-gold/
+├── gold_completed_order_revenue.parquet
+├── gold_product_performance.parquet
+├── gold_category_performance.parquet
+├── gold_store_performance.parquet
+└── gold_customer_performance.parquet
+```
+
+---
 
 # Catalog Maintenance
 
-This file should be updated whenever:
-
--   a new trusted dataset is added;
--   a schema or key changes;
--   a new relationship is introduced;
--   a quality rule materially changes;
--   a Gold analytical dataset is created.
-
-The catalog describes the current trusted data model. Transformation
-implementation details remain in the SQL scripts and pipeline
-documentation.
+Update this file whenever a trusted dataset, schema, key, relationship, quality rule or Gold output changes.

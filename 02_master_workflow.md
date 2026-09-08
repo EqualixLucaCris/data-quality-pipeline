@@ -2,19 +2,19 @@
 
 ## Checklist
 
-- [ ] 00 - Incoming
-- [ ] 01 - File Inventory
-- [ ] 02 - File Type and MIME Inspection
-- [ ] 03 - Encoding and BOM Inspection
-- [ ] 04 - Temporary UTF-8 Inspection Copy (if required)
-- [ ] 05 - Delimiter, Header and Structure Inspection
-- [ ] 06 - Raw Ingestion
-- [ ] 07 - Bronze Standardization
-- [ ] 08 - Data Quality Checks
-- [ ] 09 - Silver Cleaning and Validation
-- [ ] 10 - Data Modeling and Business SQL
-- [ ] 11 - Gold Datasets and KPIs
-- [ ] 12 - Documentation
+- [x] 00 - Incoming
+- [x] 01 - File Inventory
+- [x] 02 - File Type and MIME Inspection
+- [x] 03 - Encoding and BOM Inspection
+- [x] 04 - Temporary UTF-8 Inspection Copy (if required)
+- [x] 05 - Delimiter, Header and Structure Inspection
+- [x] 06 - Raw Ingestion
+- [x] 07 - Bronze Standardization
+- [x] 08 - Data Quality Checks
+- [x] 09 - Silver Cleaning and Validation
+- [x] 10 - Data Modeling and Business SQL
+- [x] 11 - Gold Datasets and KPIs
+- [x] 12 - Documentation
 
 ---
 
@@ -24,7 +24,7 @@ Receive source files.
 
 Location:
 
-data/00-incoming
+`data/00-incoming`
 
 Rules:
 
@@ -38,20 +38,20 @@ Rules:
 
 Collect:
 
-- File name
-- Extension
-- Size
-- MIME type
-- Encoding
-- BOM
-- Delimiter
-- Text lines
-- Columns
-- SHA-256 checksum
+- file name;
+- extension;
+- size;
+- MIME type;
+- encoding;
+- BOM;
+- delimiter;
+- text lines;
+- columns;
+- SHA-256 checksum.
 
 Output:
 
-reports/file_inventory.md
+`reports/file_inventory.md`
 
 ---
 
@@ -59,16 +59,18 @@ reports/file_inventory.md
 
 Identify:
 
-- Real file type
-- MIME type
-- Text or binary format
-- Compression (if present)
+- real file type;
+- MIME type;
+- text or binary format;
+- compression, if present.
 
 Main commands:
 
+```bash
 file filename
 file -b filename
 file -i filename
+```
 
 ---
 
@@ -76,24 +78,28 @@ file -i filename
 
 Identify:
 
-- Character encoding
-- BOM presence
-- Line endings
+- character encoding;
+- BOM presence;
+- line endings.
 
 Main commands:
 
+```bash
 file -i filename
 hexdump -C -n 16 filename
+```
 
 ---
 
-## 04 - Temporary UTF-8 Inspection Copy (if required)
+## 04 - Temporary UTF-8 Inspection Copy
 
 If the original encoding prevents proper inspection, create a temporary UTF-8 copy.
 
 Example:
 
+```bash
 iconv -f UTF-16LE -t UTF-8 input.csv > temporary_utf8.csv
+```
 
 Rules:
 
@@ -107,63 +113,80 @@ Rules:
 
 Identify:
 
-- Delimiter
-- Header
-- Number of columns
-- Number of text lines
-- Visible structure
-- Malformed rows
+- delimiter;
+- header;
+- number of columns;
+- number of text lines;
+- visible structure;
+- malformed rows.
 
 Useful commands:
 
+```bash
 head filename
 cat -A filename | head
 hexdump -C -n 100 filename
 wc -l filename
+```
 
 Useful hexadecimal values:
 
+```text
 09 = TAB
 20 = SPACE
 0A = LF
 0D = CR
+```
 
 ---
 
 ## 06 - Raw Ingestion
 
-Copy the original files without modification.
+Copy original files without modification.
 
 Destination:
 
-data/01-raw
+`data/01-raw`
 
 Validate integrity:
 
+```bash
 sha256sum original_file
 sha256sum raw_file
+```
 
-Checksums must be identical.
+Checksums must match.
+
+Primary ingestion script:
+
+`raw_ingestion.sh`
 
 ---
 
 ## 07 - Bronze Standardization
 
-Create standardized technical datasets.
+Create technically standardized datasets.
 
 Tasks:
 
-- Convert text files to UTF-8 (when required)
-- Remove or manage BOM
-- Apply the correct delimiter
-- Preserve source values
-- Add technical metadata (if required)
-- Load/export with DuckDB
-- Keep data as close as possible to the source
+- convert text files to UTF-8 when required;
+- remove/manage BOM where required;
+- normalize delimiters;
+- preserve source business values;
+- prepare structured and semi-structured inputs;
+- keep data as close as possible to the source.
 
 Destination:
 
-data/02-bronze
+`data/02-bronze`
+
+Primary script:
+
+`bronze_standardization.sh`
+
+Transformation decisions are documented in:
+
+`docs/bronze_transformation_plan`
 
 ---
 
@@ -171,96 +194,194 @@ data/02-bronze
 
 Validate:
 
-- Completeness
-- Uniqueness
-- Validity
-- Consistency
-- Referential integrity
-- Malformed records
-- Unexpected values
+- completeness;
+- uniqueness;
+- validity;
+- consistency;
+- referential integrity;
+- malformed records;
+- unexpected values;
+- invalid numeric ranges;
+- invalid dates;
+- duplicate business keys.
 
 Rejected records:
 
-data/05-rejected
+`data/05-rejected`
 
 Documentation:
 
-reports/quality_report.md
+`reports/quality_report.md`
 
 ---
 
 ## 09 - Silver Cleaning and Validation
 
-Business-ready cleaning.
+Produce trusted analytical source datasets.
 
 Tasks:
 
-- Normalize column names
-- Assign correct data types
-- Standardize dates
-- Normalize text values
-- Handle NULL values
-- Remove duplicates
-- Apply business rules
-- Validate keys
+- normalize column names;
+- assign correct data types;
+- standardize dates;
+- normalize text/boolean values;
+- handle `NULL` and blank values;
+- remove confirmed duplicates;
+- apply business rules;
+- validate keys;
+- validate relationships;
+- separate clean and rejected records;
+- export Parquet;
+- read Parquet back for verification.
 
 Destination:
 
-data/03-silver
+`data/03-silver`
+
+Clean tables use:
+
+`_clean`
+
+Rejected tables use:
+
+`_rejected`
+
+Rejected records may include:
+
+`rejection_reason`
 
 ---
 
 ## 10 - Data Modeling and Business SQL
 
-Create analytical structures.
+Build relational and analytical structures using validated Silver tables.
 
 Tasks:
 
-- Primary keys
-- Foreign keys
-- Relationships
-- Joins
-- Exploratory SQL
-- Business queries
-- SQL views
+- define business keys;
+- validate foreign-key relationships;
+- join trusted datasets;
+- translate business questions into SQL;
+- define analytical grain;
+- calculate reusable metrics.
 
-SQL location:
+SQL locations:
 
-sql/
+```text
+sql/02-silver/
+sql/03-gold/
+```
+
+Gold SQL implementation:
+
+`sql/03-gold/16_gold_analytics.sql`
 
 ---
 
 ## 11 - Gold Datasets and KPIs
 
-Create analytical outputs.
+Create analytics-ready outputs from trusted Silver data.
 
-Tasks:
+Business questions:
 
-- Aggregations
-- Metrics
-- KPIs
-- Dashboard-ready datasets
-- Final validation
+1. How much net revenue was generated by each completed order?
+2. Which products generate the most net revenue, units sold and margin?
+3. Which product categories generate the most net revenue and margin?
+4. Which stores generate the most net revenue and total margin?
+5. Which customers generate the most net revenue and total margin?
+
+Common Gold business rules:
+
+- use validated Silver data only;
+- include only completed orders;
+- include active products where applicable;
+- exclude rejected records;
+- calculate net revenue after discount;
+- calculate margin using effective selling price minus unit cost;
+- round monetary metrics to two decimal places.
+
+Gold tables:
+
+```text
+gold_completed_order_revenue
+gold_product_performance
+gold_category_performance
+gold_store_performance
+gold_customer_performance
+```
 
 Destination:
 
-data/04-gold
+`data/04-gold`
+
+Gold Parquet outputs:
+
+```text
+gold_completed_order_revenue.parquet
+gold_product_performance.parquet
+gold_category_performance.parquet
+gold_store_performance.parquet
+gold_customer_performance.parquet
+```
+
+Validation includes:
+
+- expected row count;
+- expected analytical grain;
+- uniqueness checks;
+- duplicate checks;
+- metric sanity checks;
+- Parquet read-back verification.
 
 ---
 
 ## 12 - Documentation
 
-Complete project documentation.
+Complete and synchronize project documentation.
 
-Documents:
+Main documents:
 
-- README.md
-- pipeline.md
-- conventions.md
-- architecture.md
-- file_inventory.md
-- quality_report.md
-- data_dictionary.md
-- business_questions.md
-- lessons_learned.md
-- screenshots
+- README
+- `docs/pipeline.md`
+- `docs/conventions.md`
+- `docs/architecture.md`
+- `docs/data_catalog.md`
+- `docs/business_questions.md`
+- `docs/bronze_transformation_plan`
+- `reports/file_inventory.md`
+- `reports/quality_report.md`
+
+Documentation must reflect the actual implemented pipeline rather than planned functionality.
+
+---
+
+## Final Pipeline Status
+
+```text
+Incoming inventory       COMPLETE
+Raw ingestion            COMPLETE
+Bronze standardization   COMPLETE
+Silver profiling         COMPLETE
+Silver cleaning          COMPLETE
+Rejected handling        COMPLETE
+Silver Parquet export    COMPLETE
+Gold analytics           COMPLETE
+Gold validation          COMPLETE
+Gold Parquet export      COMPLETE
+Documentation            COMPLETE
+```
+
+---
+
+## Reproducibility Principle
+
+The repository versions the elements required to understand and reproduce the pipeline:
+
+```text
+source data
++ transformation code
++ documentation
++ final Gold deliverables
+```
+
+Generated intermediate layers remain reproducible and are therefore excluded from Git where appropriate.
